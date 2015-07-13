@@ -1,0 +1,176 @@
+/* ------------- 入力フォーム ここから ------------------- */
+#cf-inquiry table.table-inquiry {
+    border-collapse: collapse;
+    /* border: 1px solid #cccccc; */
+    font-size: 12px;
+    width: 100%;
+}
+
+#cf-inquiry table.table-inquiry td {
+    padding: 5px;
+    vertical-align: top;
+    text-align: left;
+    border: 1px solid #cccccc;
+}
+
+#cf-inquiry table.table-inquiry td.c0 {
+    color: #007fc6;
+    background-color: #d6ebfe;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+}
+
+#cf-inquiry table.table-inquiry td.c1 {
+    background-color: #f7f7f7;
+    font-weight: bold;
+    font-size: 12px;
+    width: 30%;
+}
+
+#cf-inquiry table.table-inquiry td.spacer {
+    background-color: #ffffff;
+    height: 5px;
+    border-left: none;
+    border-right: none;
+}
+
+/* エラーマーク */
+#cf-inquiry span.err {
+    color: #ff0000;
+}
+
+/* 注意マーク */
+#cf-inquiry span.mark {
+    color: #ff0000;
+}
+
+/* 備考 */
+#cf-inquiry span.remark {
+    color: #ff0000;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+
+#cf-inquiry #submit {
+    width: 150px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    margin-left: 250px;
+    padding-top: 2px;
+}
+
+/* 確認ボタン */
+#cf-inquiry #confirm-button{
+    width: 150px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    /* margin-left: 200px; */
+    padding-top: 2px;
+}
+
+#cf-inquiry #confirm-buttons-area{
+    margin-top: 20px;
+}
+
+#cf-inquiry .confirmArea {
+    position: relative;
+}
+
+/* 修正ボタン */
+#cf-inquiry #edit-button{
+    width: 100px;
+    padding: 3px 0px 3px 0px;
+    position: absolute;
+    top: 20px;
+    left: 100px;
+}
+/* 送信ボタン */
+#cf-inquiry #send-button{
+    /* clear: both; */
+    width: 100px;
+    padding: 3px 0px 3px 0px;
+    position: absolute;
+    top: 20px;
+    right: 100px;
+}
+
+/* select */
+#cf-inquiry select {
+    max-width: 200px;
+}
+
+#cf-inquiry .table-inquiry-type2 .item-tr {
+ margin-bottom: 10px;
+ /* border-bottom: 1px dotted #cccccc; */
+ clear: both;
+ padding-bottom: 3px;
+ /* background-color: #f7f7f7; */
+}
+#cf-inquiry .table-inquiry-type2 .item-tr:after {
+ content:".";
+ display:block;
+ height:0;
+ clear:both;
+ visibility:hidden;
+}
+#cf-inquiry .table-inquiry-type2 .item-tr {
+ display:inline-block;
+}
+/* hides from IE-mac \*/
+* html #cf-inquiry .table-inquiry-type2 .item-tr {
+ height:1%;
+}
+#cf-inquiry .table-inquiry-type2 .item-tr {
+ display:block;
+}
+/* End hides from IE-mac */
+
+
+#cf-inquiry .table-inquiry-type2 .c1 {
+
+    /* float: left;
+    font-weight: bold;
+    display: block;
+    width: 30%; */
+}
+
+#cf-inquiry .table-inquiry-type2 .c2 {
+ /* width: 68%;
+ float: right; */
+}
+
+#cf-inquiry .table-inquiry-type2 .c0 {
+    font-weight: bold;
+    text-align: center;
+    color: #007fc6;
+    background-color: #d6ebfe;
+    padding: 5px 0px 5px 0px;
+}
+
+.errorMessgaeBox {
+    background-color: #dee5f1;
+    border-top: 1px solid #cbcbcb;
+    border-bottom: 1px solid #cbcbcb;
+    text-align: left;
+    margin-bottom: 20px;
+    padding: 10px;
+}
+
+.errorMessgaeBox ul.errorMessgaeTag {
+    
+}
+
+.errorMessgaeBox ul.errorMessgaeTag li {
+    list-style-type: disc;
+    margin-left: 10px;
+    color: #cc0000;
+}
+
+p.confirmDescription {
+    margin-bottom: 20px;
+}
+
+/*  ------------- 入力フォーム ここまで ------------------- */

@@ -1,0 +1,43 @@
+<?php
+/**
+ * 各フォームの基本
+ */
+class RzFormBase {
+
+    protected $name;
+    protected $request;
+    protected $sheet;
+
+    protected $errorfmt = '<span class="err">%s</span>';
+    
+    public function __construct($name, $sheet) {
+        $this->name = $name;
+        $this->sheet = $sheet;
+    }
+
+    /* フォームを htmlで取得 */
+    public function getForm();
+
+    
+    
+    
+    /* 値を取得 */
+    public function getValue($format = '');
+
+    /* hidden */
+    public function getHiddenTag();
+
+    /* 投稿データへ登録 */
+    public function postRegistByPid($post_id);
+
+    /* WordPrssのユーザーデータからしてrequestにセット */
+    public function setValueFromWPUserdata($user_id);
+
+    /* 投稿データから値を取得し、requestにセットする（投稿編集用） */
+    public function setValueFromWPPostdata($post_id);
+
+    /* 指定された投稿IDでアップデートする */
+    public function updateValueWPPostByPid($post_id);
+
+}
+?>

@@ -1,0 +1,519 @@
+<?php
+
+require_once 'RequestCheck.php';
+require_once 'RzFactoryForm.class.php';
+
+define('MYCONFORM_UPLOAD_FILE_DIR', 'myconform');
+define('MYCONFORM_UPLOAD_FILE_SIZE', '2M');
+
+class RequestForm extends RequestCheck {
+
+    var $ken_arr = array("選択してください","北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県",
+                         "福島県", "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県",
+                         "東京都", "神奈川県", "新潟県", "富山県", "石川県",
+                         "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県",
+                         "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
+                         "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県",
+                         "広島県", "山口県", "徳島県", "香川県", "愛媛県", "高知県",
+                         "福岡県", "佐賀県", "長崎県", "熊本県", "大分県",
+                         "宮崎県", "鹿児島県", "沖縄県");
+
+    var $factory_form_arr = array('type-category', 'type-gmapxy', 'type-text');
+    
+    // getFormへの追加項目
+    function getForm($name, $interval = 3) {
+        $form = "";
+        $sheet = $this->checksheet[$name];
+        // print_r($sheet); exit;
+        if (is_array($sheet)) {
+            if (in_array($sheet['type'], $this->factory_form_arr)) {
+                // 今後はこちらにシフトする
+                $factory = new RzFactoryForm();
+                $obj = $factory->create($name, $sheet);
+                $obj->setRequest($this);
+                $form = $obj->getForm();
+            } else if (isset($sheet['type-phone'])) {
+                $size1 = 4;
+                $size2 = 4;
+                $size3 = 4;
+                $typephone = $sheet['type-phone'];
+                if(is_array($typephone) && count($typephone) > 0) {
+                    $size1 = $typephone['size1'];
+                    $size2 = $typephone['size2'];
+                    $size3 = $typephone['size3'];
+                }
+                $format = "%s - %s - %s";
+                $form = sprintf($format,
+                                RequestCheck::getFormText($name . '-1', $size1 , $size1),
+                                RequestCheck::getFormText($name . '-2', $size2 , $size2),
+                                RequestCheck::getFormText($name . '-3', $size3 , $size3));
+            } else if (isset($sheet['type-zip'])) {
+                $typezip = $sheet['type-zip'];
+                $size1 = 3;
+                $size2 = 4;
+                
+                if(is_array($typezip) && count($typezip) > 0) {
+                    $size1 = $typezip['size1'];
+                    $size2 = $typezip['size2'];
+                }
+                
+                $format = "%s - %s";
+                $form = sprintf($format,
+                                RequestCheck::getFormText($name . '-1', $size1 ,$size1),
+                                RequestCheck::getFormText($name . '-2', $size2 ,$size2));
+            } else if (isset($sheet['type-ken'])) {
+                $this->checksheet[$name]['type-select'] = $this->ken_arr;
+                $form = RequestCheck::getForm($name, $interval);
+            } else if (isset($sheet['type-address'])) {
+                $format  = "都道府県: %s<br />\n";
+                $format .= "市区町村・番地等:<br />%s<br />\n";
+                $format .= "ビル名・階数等:<br /> %s\n";
+                $name1 = $name . '-1';
+                $this->checksheet[$name1]['type-select'] = $this->ken_arr;
+                $form = sprintf($format,
+                                RequestCheck::getForm($name1, $interval),
+                                RequestCheck::getFormText($name . '-2', 50 ,100),
+                                RequestCheck::getFormText($name . '-3', 50 ,100));
+            } else if (isset($sheet['type-date'])) {
+                $name1 = $name . '-1';
+                $name2 = $name . '-2';
+                $name3 = $name . '-3';
+                // はじめの年
+                if(isset($sheet['set-year-from-to'])) {
+                    $y_arr = explode('#', $sheet['set-year-from-to']);
+                    $from_year = $y_arr[0];
+                    $to_year = $y_arr[1];
+                } else {
+                    $from_year = 1940;
+                    $to_year = 2020;
+                }
+
+                
+                if(isset($sheet['set-default-date'])) {
+                    if($sheet['set-default-date'] == 'today') {
+                        $d_day_arr = explode('-', date('Y-m-d'));
+                        if ($this->get($name1) == '') 
+                            $this->add($name1, $d_day_arr[0]);
+                        if ($this->get($name2) == '') 
+                            $this->add($name2, $d_day_arr[1]);
+                        if ($this->get($name3) == '') 
+                            $this->add($name3, $d_day_arr[2]);
+                    }
+                }
+                
+                $this->checksheet[$name1]['type-select-from-to'] = array($from_year, $to_year);
+                $this->checksheet[$name2]['type-select-from-to'] = array(1, 12);
+                $this->checksheet[$name3]['type-select-from-to'] = array(1, 31);
+                $format = "%s 年 %s 月 %s 日";
+                $form = sprintf($format, 
+                                RequestCheck::getForm($name1),
+                                RequestCheck::getForm($name2),
+                                RequestCheck::getForm($name3));
+            } else if (isset($sheet['type-multi-text'])) {
+                $items = $sheet['type-multi-text'];
+                $i = 1;
+                foreach ($items as $item) {
+                    $n = $name . '-' . $i;
+                    $form .= sprintf("%s:<br />\n%s<br />\n",
+                                     $item,
+                                     RequestCheck::getFormText($n, 40 ,80)
+                                     );
+                    $i++;
+                }
+            } else if(isset($sheet['type-image'])) {
+                // 画像アップ処理
+                $form = sprintf("<input type=\"file\" name=\"%s\" size=\"30\" />", $name);
+            } else if(isset($sheet['type-file'])) {
+                $form = '';
+                // 画像アップ処理
+                // 既にアップされていた場合。
+                $get_val = $this->get($name);
+                $old_file = $this->getUploadDir() . '/' . $get_val;
+                if (isset($get_val) && $get_val != '' && file_exists($old_file)) {
+                    $form .= sprintf('<input type="hidden" name="%s-tmp" value="%s"/>',
+                                     $name, $get_val);
+                    $form .= "<strong>File: $get_val</span><br />";
+                    
+                }
+                
+                $form .= sprintf("<input type=\"file\" name=\"%s\" size=\"30\" />", $name);
+            } else {
+                $form = RequestCheck::getForm($name, $interval);
+            }
+        }
+
+        if (isset($sheet['remark']) && $sheet['remark'] != "") {
+            $form .= sprintf("<span class=\"remark\">%s</span>", $sheet['remark']);
+        }
+        return $form;
+    }
+
+    // check関数への追加項目
+    function check($name) {
+        if (isset($this->checksheet[$name])) {
+            $sheet = $this->checksheet[$name];
+        }
+        $msg = "";
+        if (is_array($sheet) && isset($sheet['type-textarea'])) {
+            $msg = RequestCheck::check($name);
+            $msg = nl2br($msg); // 表示の時改行を入れる
+        } else if (is_array($sheet) && isset($sheet['type-checkbox'])) {
+            $msg = RequestCheck::_check($name, $this->get($name));
+            if($msg != "") {
+                $this->errflag++;
+            } else {
+                $msg = RequestCheck::getValue($name, "%s<br />");
+            }
+        } else if (is_array($sheet) && isset($sheet['type-checkbox-2'])) {
+            $msg = RequestCheck::getValue($name, "%s<br />");
+        } else if (is_array($sheet) && isset($sheet['type-phone'])) {
+            $v1 = $this->get($name . '-1');
+            $v2 = $this->get($name . '-2');
+            $v3 = $this->get($name . '-3');
+            
+            $msg1 = RequestCheck::_check($name, $v1, $sheet);
+            $msg2 = RequestCheck::_check($name, $v2, $sheet);
+            $msg3 = RequestCheck::_check($name, $v3, $sheet);
+            if ($msg1) $msg = $msg1;
+            if ($msg2) $msg = $msg2;
+            if ($msg3) $msg = $msg3;
+
+            if($msg != "") {
+                $this->errflag++;
+            }
+            
+            if ($msg == "" && $v1 != "" && $v2 != "" && $v3 != "") 
+                $msg = sprintf("%s - %s - %s", $v1, $v2, $v3);
+
+        } else if (is_array($sheet) && isset($sheet['type-zip'])) {
+            $v1 = $this->get($name . '-1');
+            $v2 = $this->get($name . '-2');
+            
+            $msg1 = RequestCheck::_check($name, $v1, $sheet);
+            $msg2 = RequestCheck::_check($name, $v2, $sheet);
+
+            if ($msg1) $msg = $msg1;
+            if ($msg2) $msg = $msg2;
+
+            if ($msg == ""
+                && (mb_strlen($v1) > 0 || mb_strlen($v2) > 0)
+                &&  is_array($sheet['type-zip'])
+                && isset($sheet['check-input-size-just'])) {
+                $str_size1 = $sheet['type-zip']['size1'];
+                $str_size2 = $sheet['type-zip']['size2'];
+                if (mb_strlen($v1) != $str_size1 || mb_strlen($v2) != $str_size2) {
+                    $msg = sprintf($this->errorfmt, $sheet['check-input-size-just']);
+                    $this->errflag++;
+                }
+            }
+            
+            if ($msg == "")  {
+                $msg = sprintf("%s - %s", $v1, $v2);
+            } else {
+                $this->errflag++;
+            }
+            
+        } else if (is_array($sheet) && isset($sheet['type-address'])) {
+            $msg = "";
+            $v1 = $this->get($name . '-1');
+            if (isset($sheet['check-must']) && trim($v1) == $this->ken_arr[0]) {
+                $msg .= sprintf($this->errorfmt, "都道府県が選択されていません<br />");
+            }
+            $v2 = $this->get($name . '-2');
+            if (isset($sheet['check-must']) && trim($v2) == '') {
+                $msg .= sprintf($this->errorfmt, "市区町村が入力されていません<br />");
+            }
+            $v3 = $this->get($name . '-3');
+
+            if ($msg == "") {
+                $format  = "都道府県: %s<br />\n";
+                $format .= "市区町村:<br />%s<br />\n";
+                $format .= "ビル名・階数等:<br /> %s\n";
+                $msg = sprintf($format, $v1, $v2, $v3);
+            } else {
+                $this->errflag++;
+            }
+        } else if (is_array($sheet) && isset($sheet['type-date'])) {
+            $v1 = $this->get($name . '-1');
+            $v2 = $this->get($name . '-2');
+            $v3 = $this->get($name . '-3');
+
+            $msg = '';
+            if (isset($sheet['check-must'])) {
+                if ($v1 ==  '' || $v2 ==  '' || $v3 ==  '') {
+                    $msg = sprintf($this->errorfmt, "日付が選択されていません");
+                }
+            }
+
+            if ($msg == "") {
+                $format  = "%s 年 %s 月 %s 日\n";
+                $msg = sprintf($format, $v1, $v2, $v3);
+            } else {
+                $this->errflag++;
+            }
+        } else if (isset($sheet['type-multi-text'])) {
+            $items = $sheet['type-multi-text'];
+            $i = 1;
+            foreach ($items as $item) {
+                $n = $name . '-' . $i;
+                $msg .= sprintf("%s:<br />\n%s<br />\n",
+                                $item, $this->get($n));
+                $i++;
+            }
+        } else if (is_array($sheet) && isset($sheet['type-file'])) {
+            $uplimit = 1024 * 1024 * 2; // サイズチェック 2M
+            if ($_FILES[$name]["size"] > $uplimit) {
+                $msg = sprintf($this->errorfmt, "ファイルサイズが大きすぎます");
+                $this->errflag++;
+                return $msg;
+            }
+            if(($msg = $this->fileUploadInit()) != '') {
+                return $msg;
+            }
+            if (is_uploaded_file($_FILES[$name]["tmp_name"])) {
+                $upload_dir = $this->getUploadDir();
+                $upload_filename = $_FILES[$name]["name"];
+                $upfile =  $upload_dir . "/" . $upload_filename;
+                if (move_uploaded_file($_FILES[$name]["tmp_name"], $upfile)) {
+                    chmod($upfile, 0644);
+                    $msg = $_FILES[$name]["name"];
+                    
+                    // 既にアップロードファイルがある場合
+                    // （ファイル変更で増え続けるのを防ぐ）
+                    $tmpname = $name . '-tmp';
+                    $old_filename = $this->get($tmpname);
+                    $old_filepath = $this->getUploadDir() . '/' . $old_filename;
+                    if (isset($old_filename) && $old_filename != '' && file_exists($old_filepath)) {
+                        unlink($old_filepath); // 削除
+                    }
+                    
+                } else {
+                    $msg = sprintf($this->errorfmt, "$filenmae ファイルをアップロードできませんでした。");
+                }
+            } else {
+                $tmpname = $name . '-tmp';
+                $upload_filename = $this->get($tmpname);
+                if (isset($upload_filename) && $upload_filename != '') {
+                    $msg = $upload_filename;
+                } else {
+                    // 添付ファイル指定がなかった場合
+                    if(isset($sheet['check-must']) && $sheet['check-must'] != '') {
+                        $msg = sprintf($this->errorfmt, $sheet['check-must']);
+                        $this->errflag++;
+                    }
+                }
+            }
+        } else if (is_array($sheet) && isset($sheet['type-category'])) {
+            $factory = new RzFactoryForm();
+            $obj = $factory->create($name, $sheet);
+            $obj->setRequest($this);
+            $msg = $obj->check();
+        } else {
+            $msg = RequestCheck::check($name);
+            
+        }
+        return $msg;
+    }
+
+    // File: uploadディレクトリを返す
+    function getUploadDir() {
+        $upload_dirs = wp_upload_dir();
+        $upload_dir = $upload_dirs['basedir'] . '/' . MYCONFORM_UPLOAD_FILE_DIR;
+        return $upload_dir;
+    }
+    
+
+    function fileUploadInit() {
+        $upload_dir = $this->getUploadDir();
+        // echo $upload_dir;
+        $msg = '';
+        if ((file_exists($upload_dir) && is_dir($upload_dir)) || mkdir($upload_dir)) {
+
+            // .htaccess で 外からアクセスできないようにする
+            $dot_htaccess = $upload_dir . '/' . '.htaccess';
+            if (! file_exists( $dot_htaccess ) ) {
+                if ( $fp = @fopen( $dot_htaccess, 'w' ) ) {
+                    fwrite( $fp, "Deny from all\n" );
+                    fclose( $fp );
+                }
+            }
+            
+            // 不要なファイルがないかチェックする
+            if ( $fp = opendir( $upload_dir ) ) {
+                while ( false !== ( $filename = readdir( $fp ) ) ) {
+                    if ( $filename == "." || $filename == ".." || $filename == ".htaccess" ) {
+                        continue;
+                    }
+                    $stat = stat( $upload_dir . '/' . $filename );
+                    $deltime = 60 * 5;                 // 5分経過したファイルを削除する
+                    if ( $stat['mtime'] + $deltime < time() ) {
+                        unlink( $upload_dir . '/' . $filename );
+                    }
+                }
+                closedir( $fp );
+            }
+        } else {
+            $msg = sprintf($this->errorfmt, "アップロードディレクトリを作成できませんでした。");
+            $this->errflag++;
+        }
+        return $msg;
+    }
+    
+    // hiddenの追加
+    function getHiddenValues() {
+        $hidden = "";
+        $hidden .= RequestCheck::getHiddenValues();
+        foreach ($this->checksheet as $name => $sheet) {
+            if (in_array($sheet['type'], $this->factory_form_arr)) {
+                // 今後はこちらにシフトする
+                $factory = new RzFactoryForm();
+                $obj = $factory->create($name, $sheet);
+                $obj->setRequest($this);
+                $hidden .= $obj->getHiddenTag();
+            } else if (isset($sheet['type-phone']) || isset($sheet['type-date']) || isset($sheet['type-address'])) {
+                $hidden .= $this->getHiddenTag($name . '-1', $this->get($name . '-1'));
+                $hidden .= $this->getHiddenTag($name . '-2', $this->get($name . '-2'));
+                $hidden .= $this->getHiddenTag($name . '-3', $this->get($name . '-3'));
+            } else if (isset($sheet['type-zip'])) {
+                $hidden .= $this->getHiddenTag($name . '-1', $this->get($name . '-1'));
+                $hidden .= $this->getHiddenTag($name . '-2', $this->get($name . '-2'));
+            } else if (isset($sheet['type-multi-text'])) {
+                $items = $sheet['type-multi-text'];
+                $i = 1;
+                foreach ($items as $item) {
+                    $n = $name . '-' . $i;
+                    $hidden .= $this->getHiddenTag($n, $this->get($n));
+                    $i++;
+                }
+            } else if (isset($sheet['type-file'])) {
+                $upload_filename = $_FILES[$name]["name"];
+                if (!isset($upload_filename) || $upload_filename == '') {
+                    $tmpname = $name . '-tmp';
+                    $upload_filename = $this->get($tmpname);
+                }
+                $hidden .= $this->getHiddenTag($name, $upload_filename);
+            } else if(is_array($sheet) && isset($sheet['type-category'])) {
+                $factory = new RzFactoryForm();
+                $obj = $factory->create($name, $sheet);
+                $obj->setRequest($this);
+                $hidden .= $obj->getHiddenValues();
+            }
+        }
+        return $hidden;
+    }
+
+    function setUsermetaValues($user_id) {
+        foreach ($this->checksheet as $name => $sheet) {
+            $v = $this->get($name);
+            if ($sheet['type-checkbox-2'] || $sheet['type-radio-2']) {
+                update_usermeta( $user_id, $name, $v);
+                $name_o = $name . "_o";
+                update_usermeta($user_id, $name_o, $this->get($name_o));
+            } else if ($sheet['type-phone'] || $sheet['type-date']) {
+                update_usermeta($user_id, $name . '-1', $this->get($name . '-1'));
+                update_usermeta($user_id, $name . '-2', $this->get($name . '-2'));
+                update_usermeta($user_id, $name . '-3', $this->get($name . '-3'));
+            } else if ($sheet['type-zip']) {
+                update_usermeta($user_id, $name . '-1', $this->get($name . '-1'));
+                update_usermeta($user_id, $name . '-2', $this->get($name . '-2'));
+            } else if ($sheet['type-address']) {
+                update_usermeta($user_id, $name . '-1', $this->get($name . '-1'));
+                update_usermeta($user_id, $name . '-2', $this->get($name . '-2'));
+                update_usermeta($user_id, $name . '-3', $this->get($name . '-3'));
+            } else {
+                update_usermeta($user_id, $name, $v);
+            }
+        }
+        
+    }
+    
+    // getValueの追加
+    function getValue($name, $format = '') {
+        $string = "";
+        $sheet = $this->checksheet[$name];
+        if($sheet['type-phone']) {
+            // 電話番号 (or FAX)
+            $format = "%s-%s -%s";
+            $string = sprintf($format,
+                              $this->get($name . '-1'),
+                              $this->get($name . '-2'),
+                              $this->get($name . '-3')
+                              );
+        } else if($sheet['type-zip']) {
+            // 郵便番号
+            $format = "%s-%s";
+            $string = sprintf($format,
+                              $this->get($name . '-1'),
+                              $this->get($name . '-2')
+                              );
+        } else if($sheet['type-address']) {
+            // 住所
+            $format = "%s %s %s";
+            $string = sprintf($format,
+                              $this->get($name . '-1'),
+                              $this->get($name . '-2'),
+                              $this->get($name . '-3')
+                              );
+        } else if($sheet['type-date']) {
+            $format = "%s 年 %s 月 %s 日";
+            $string = sprintf($format,
+                              $this->get($name . '-1'),
+                              $this->get($name . '-2'),
+                              $this->get($name . '-3')
+                              );
+        } else if ($sheet['type-multi-text']) {
+            $items = $sheet['type-multi-text'];
+            $i = 1;
+            foreach ($items as $item) {
+                $n = $name . '-' . $i;
+                $string .= sprintf(" + %s: %s\n", $item, $this->get($n));
+                $i++;
+            }
+        } else if ($sheet['type-category']) {
+            $factory = new RzFactoryForm();
+            $obj = $factory->create($name, $sheet);
+            $obj->setRequest($this);
+            $string = $obj->getValue($format);
+        } else {
+            if ($format == '') {
+                $format = '%s ';
+            }
+            $string = RequestCheck::getValue($name, $format);
+        }
+        return $string;
+    }
+
+    /**
+     * 現在カテゴリのみなので、分岐はいらない
+     */
+    function getCategoryIds($name) {
+        // $ids_arr = array();
+        $ids_arr = array();;
+        $sheet = $this->checksheet[$name];
+        $factory = new RzFactoryForm();
+        $obj = $factory->create($name, $sheet);
+        $obj->setRequest($this);
+        $ids_arr = array_merge($ids_arr, $obj->getCategoryIDs());
+        
+        return $ids_arr;
+    }
+
+    /**
+     * 指定された入力POSTを記事として登録する
+     */
+    function postRegistByPids($post_id) {
+        $form = "";
+        foreach ($this->checksheet as $name => $sheet) {
+            
+            if (in_array($sheet['type'], $this->factory_form_arr)) {
+                // 今後はこちらにシフトする
+                $factory = new RzFactoryForm();
+                $obj = $factory->create($name, $sheet);
+                $obj->setRequest($this);
+                $form .= $obj->postRegistByPid($post_id);
+            }
+        }
+        return $form;
+    }
+}
+?>
