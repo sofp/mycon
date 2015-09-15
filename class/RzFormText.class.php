@@ -24,7 +24,19 @@ class RzFormText extends RzFormBase {
     public function getForm() {
         $form = "";
 
-        $format_temp = '<input type="text" id="%s" name="%s" %s value="%s" />';
+        
+        $class_str = 'typeText ' . $this->name;
+        if (isset($this->sheet['class'])) {
+            $class_str = $class_str . ' ' . $this->sheet['class'];
+        }
+
+        $type_str = "text";
+        if(isset($this->sheet['type-str'])) {
+            $type_str = $this->sheet['type-str'];
+        }
+        
+        $format_temp = '<input type="%s" id="%s" name="%s" %s value="%s" class="%s" />';
+        
         $option = "";
         if ($this->size != "") {
             $option .= sprintf(" size=\"%s\" ", $this->size);
@@ -33,7 +45,9 @@ class RzFormText extends RzFormBase {
         if ($this->maxlength != "") {
             $option .= sprintf(" maxlength=\"%s\" ", $this->maxlength);
         }
-        $form = sprintf($format_temp, $this->name, $this->name, $option, $this->request->get($this->name));
+
+        
+        $form = sprintf($format_temp, $type_str, $this->name, $this->name, $option, $this->request->get($this->name), $class_str);
         
         return $form;
     }

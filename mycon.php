@@ -713,10 +713,13 @@ type=type-textarea
     function includeStyle() {
         ?>
         <link rel="stylesheet" href="<?php bloginfo('home'); ?>/wp-content/plugins/mycon/mycontact.css" type="text/css" />
-        <!-- <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&amp;region=JP"></script>
-        <script type="text/javascript" src="<?php bloginfo('home'); ?>/wp-content/plugins/mycon/js/mycon.js"></script>-->
-
-            <?php
+<script type="text/javascript">
+// ページ情報読み込めてからチェック項目について設定する
+     jQuery(document).ready(function(){
+         jQuery("#registerform").validationEngine('attach', {promptPosition: "topLeft"});
+     });
+</script>
+<?php
     }
 
     /**
@@ -964,6 +967,17 @@ if ($display_form_id != "" && $opt != '') {
         $form .= '</div>';
         return $form;
     }
+
+    function mycon_enqueue_script() {
+        wp_enqueue_script( 'validationEngine', plugins_url('js/jquery.validationEngine.js', __FILE__), array( 'jquery' ) );
+        wp_enqueue_script( 'validationEngine-ja', plugins_url('js/jquery.validationEngine-ja.js', __FILE__), array( 'jquery' ) );
+
+    }
+    
+    function mycon_enqueue_style() {
+        $validationEngine_css_url = plugins_url('js/validationEngine.jquery.css', __FILE__);
+        wp_enqueue_style('validationEngine_css', $validationEngine_css_url, false, null);
+    }
     
 }
 
@@ -976,5 +990,7 @@ add_action('wp_head', array(&$mycontact_0x01, 'includeStyle'));
 /* 管理メニュー */
 add_action('admin_menu',array(&$mycontact_0x01, 'settingMenu'));
 
+add_action('wp_enqueue_scripts',array(&$mycontact_0x01, 'mycon_enqueue_script'));
+add_action('wp_enqueue_scripts',array(&$mycontact_0x01, 'mycon_enqueue_style'));
 
 ?>

@@ -11,7 +11,13 @@ class RzFormTextarea extends RzFormBase {
         $form = "";
         $textform = $this->sheet['type-textarea'];
 
-        $format_temp = '<textarea name="%s" %s >%s</textarea>';
+
+        $class_str = 'typeTextArea ' . $this->name;
+        if (isset($this->sheet['class'])) {
+            $class_str = $class_str . ' ' . $this->sheet['class'];
+        }
+        
+        $format_temp = '<textarea name="%s" %s class="%s">%s</textarea>';
         $option = "";
         if (is_array($textform) && count($textform) > 0) {
             if (isset($textform['rows']) && $textform['rows'] != "") {
@@ -22,7 +28,7 @@ class RzFormTextarea extends RzFormBase {
                 $option .= sprintf(" cols=\"%s\" ", $textform['cols']);
             }
         }
-        $form = sprintf($format_temp, $this->name, $option, $this->request->get($this->name));
+        $form = sprintf($format_temp, $this->name, $option, $class_str, $this->request->get($this->name));
         return $form;
     }
 
