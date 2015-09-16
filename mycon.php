@@ -46,7 +46,18 @@ class myConForms {
     /**
      * myContactコンストラクタ
      */
-    function myConForms($dataFileName = '') {
+    public function __construct($dataFileName = '') {
+        /* 付け加え */
+        add_filter('the_content', array($this, 'mycontact_filter'));
+        /* スタイルシート */
+        add_action('wp_head', array($this, 'includeStyle'));
+        /* 管理メニュー */
+        add_action('admin_menu',array($this, 'settingMenu'));
+        add_action('wp_enqueue_scripts',array($this, 'mycon_enqueue_script'));
+        add_action('wp_enqueue_scripts',array($this, 'mycon_enqueue_style'));
+
+        add_action('template_redirect', array($this, 'mycon_redirect_page'));
+        
         $this->request = new RequestForm();
 
         // ファイル指定を可能に
@@ -147,10 +158,8 @@ class myConForms {
      * コントロール
      */
     function cf_ctl() {
-        // echo "<p>myConForms::cf_ctl()</p>";
         if (isset($_REQUEST['cfctl'])) {
             $cfctl = $_REQUEST['cfctl'];
-
             if ($cfctl == 'confirm') 
                 $form = $this->cf_confirm(); // 入力確認
             else if ($cfctl == 'reedit')
@@ -275,33 +284,24 @@ class myConForms {
             $confirm_text = stripcslashes($this->options['mycontact_form_text']);
         }
         if (isset($confirm_text)) {
-            // print "<p>-- confirm_text --</p>";
             $form .= $confirm_text;
             $pattern = array();
             $replace = array();
             foreach ($this->sheet as $name => $val) {
                 $pattern[] = sprintf("/\[name:%s\]/", $name);
                 $replace[] = $request->getItemname($name);
-                
                 $pattern[] = sprintf("/\[form:%s\]/", $name);
-                // $replace[] = $request->check($name);
                 $replace[] = $request->getValue($name);
             }
-
-            // print_r($pattern);
-            // print "<p>-- end confirm_text --</p>";
-            //print_r($replace);
-            
             $form = preg_replace($pattern, $replace, $form);
         } else {
-            // print "<p>-- no confirm_text --</p>";
             $form .= '<div class="table-inquiry-type2">';
             foreach ($this->sheet as $name => $val) {
-                $form .= '<div class="item-tr" style="margin-bottom: 10px;">';
+                $form .= '<div class="item-tr">';
                 if (isset($val['type-title'])) {
                     $form .= sprintf("<div class=\"ctitle\">%s</div>", $request->getItemname($name));
                 } else {
-                    $form .= sprintf("<div class=\"c1\" style=\"font-weight: bold;\">%s</div>", $request->getItemname($name));
+                    $form .= sprintf("<div class=\"c1\">%s</div>", $request->getItemname($name));
                     $form .= sprintf("<div class=\"c2\">%s</div>",  $request->getValue($name));
                 }
                 $form .= '</div>';
@@ -323,7 +323,6 @@ class myConForms {
       </p>
   </form>
 ';
-        // echo "<p>error_count:[" . $request->getErrorCount() . "]</p>";
         if ($request->getErrorCount() == 0) {
             $form .= '
   <form method="post" action="'. $_SERVER['REQUEST_URI'] .'">
@@ -703,6 +702,8 @@ type=type-textarea
 </div>';
         $initopt['mycontact_form_text'] = ''; // html
         $initopt['mycontact_confirm_text'] = ''; // html
+        $initopt['mycontact_thanks_page_url'] = '';
+        
         return $initopt;
     }
     
@@ -712,8 +713,7 @@ type=type-textarea
      */
     function includeStyle() {
         ?>
-        <link rel="stylesheet" href="<?php bloginfo('home'); ?>/wp-content/plugins/mycon/mycontact.css" type="text/css" />
-<script type="text/javascript">
+<script>
 // ページ情報読み込めてからチェック項目について設定する
      jQuery(document).ready(function(){
          jQuery("#registerform").validationEngine('attach', {promptPosition: "topLeft"});
@@ -923,6 +923,12 @@ if ($display_form_id != "" && $opt != '') {
       <th scope="row">送信完了ページ表示メッセージ</th>
       <td><textarea name="mycontact_done_page_text" rows="8" cols="50" class="large-text code"><?php echo stripcslashes($opt['mycontact_done_page_text'])?></textarea></td>
      </tr>
+
+      <tr>
+      <th scope="row">thanksページリダイレクトURL</th>
+      <td><input type="text" name="mycontact_thanks_page_url" value="<?php echo $opt['mycontact_thanks_page_url']; ?>" /></td>
+     </tr>
+     
    </table>
    
    <input type="submit" class="button button-primary" value="設定を保存" />
@@ -968,6 +974,22 @@ if ($display_form_id != "" && $opt != '') {
         return $form;
     }
 
+    /**
+     * 設定があった場合、リダイレクト処理
+     */
+    public function mycon_redirect_page() {
+        if (isset($_REQUEST['cfctl']) && $_REQUEST['cfctl'] == 'done') {
+            $this_post_obj = get_post();
+            $this->mycontact_filter($this_post_obj->post_content); /* check this page conent has mycon-form tag */
+            // exit;
+            $redirect_url = $this->options['mycontact_thanks_page_url'];
+            if ($redirect_url != '') {
+                header("Location: $redirect_url");
+                exit;
+            }
+        }
+    }
+    
     function mycon_enqueue_script() {
         wp_enqueue_script( 'validationEngine', plugins_url('js/jquery.validationEngine.js', __FILE__), array( 'jquery' ) );
         wp_enqueue_script( 'validationEngine-ja', plugins_url('js/jquery.validationEngine-ja.js', __FILE__), array( 'jquery' ) );
@@ -975,22 +997,14 @@ if ($display_form_id != "" && $opt != '') {
     }
     
     function mycon_enqueue_style() {
-        $validationEngine_css_url = plugins_url('js/validationEngine.jquery.css', __FILE__);
-        wp_enqueue_style('validationEngine_css', $validationEngine_css_url, false, null);
+        wp_enqueue_style('mycon', plugins_url('mycontact.css', __FILE__), false, null);
+        wp_enqueue_style('validationEngine', plugins_url('js/validationEngine.jquery.css', __FILE__), false, null);
     }
     
 }
 
-$mycontact_0x01 = new myConForms();
+new myConForms();
 
-/* 付け加え */
-add_filter('the_content', array(&$mycontact_0x01, 'mycontact_filter'));
-/* スタイルシート */
-add_action('wp_head', array(&$mycontact_0x01, 'includeStyle'));
-/* 管理メニュー */
-add_action('admin_menu',array(&$mycontact_0x01, 'settingMenu'));
 
-add_action('wp_enqueue_scripts',array(&$mycontact_0x01, 'mycon_enqueue_script'));
-add_action('wp_enqueue_scripts',array(&$mycontact_0x01, 'mycon_enqueue_style'));
 
 ?>
