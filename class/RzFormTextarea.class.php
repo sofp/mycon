@@ -45,6 +45,7 @@ class RzFormTextarea extends RzFormBase {
         } else if(isset($chk['check-must'])) {
             $msg = sprintf($this->request->errorfmt, $chk['check-must']);
         }
+        return $msg;
     }
 
 
