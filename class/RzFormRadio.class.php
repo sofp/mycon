@@ -65,7 +65,7 @@ class RzFormRadio extends RzFormBase {
 
             $id_str = sprintf("%s-%d", $this->name, $i);
             
-            $form .= sprintf("<p><input type=\"radio\" id=\"%s\" class=\"%s\" name=\"%s\" value=\"%s\" %s /><label for=\"%s\">%s</label></p>\n", $id_str, $class_str, $this->name, $value, $checked, $id_str, $value_str);
+            $form .= sprintf("<input type=\"radio\" id=\"%s\" class=\"%s\" name=\"%s\" value=\"%s\" %s /><label for=\"%s\">%s</label>\n", $id_str, $class_str, $this->name, $value, $checked, $id_str, $value_str);
             
             
             if (($i % $interval) == 0) {

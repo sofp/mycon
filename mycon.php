@@ -189,7 +189,7 @@ class myConForms {
 ';
         } else {
             $form .= '
-<form method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'">
+<form method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'" class="form-horizontal">
 ';
         }
         if (isset($this->options['mycontact_form_text']) && $this->options['mycontact_form_text'] != "") {
@@ -209,14 +209,14 @@ class myConForms {
             // print_r($this->sheet);
             $form .= '<div class="table-inquiry-type2">';
             foreach ($this->sheet as $name => $val) {
-                $form .= '<div class="item-tr" style="margin-bottom: 10px;">';
+                $form .= '<div class="item-tr form-group">';
                 if (isset($val['type-hidden'])) {
                     ;
                 } else if (isset($val['type-title'])) {
                     $form .= sprintf("<div class=\"ctitle\">%s</div>", $request->getItemname($name));
                 } else {
-                    $form .= sprintf("<div class=\"c1\" style=\"font-weight: bold;\">%s</div>", $request->getItemname($name));
-                    $form .= sprintf("<div class=\"c2\">%s</div>",  $request->getForm($name));
+                    $form .= sprintf("<label class=\"c1 control-label col-sm-3\">%s</label>", $request->getItemname($name));
+                    $form .= sprintf("<div class=\"c2 col-sm-9\">%s</div>",  $request->getForm($name));
                 }
                 $form .= '</div>';
             }
@@ -229,9 +229,9 @@ class myConForms {
         }
 
         $form .= '
-<div class="confirmArea">
+<div class="confirmArea form-group text-center">
 <input type="hidden" name="cfctl" value="confirm" />
-<input type="submit" id="confirm-button" value="送信項目を確認" />
+<button type="submit" id="confirm-button" class="btn btn-default">送信項目を確認</button>
 </div>
 </form>
 </div>';
@@ -295,14 +295,14 @@ class myConForms {
             }
             $form = preg_replace($pattern, $replace, $form);
         } else {
-            $form .= '<div class="table-inquiry-type2">';
+            $form .= '<div class="table-inquiry-type2 form-horizontal">';
             foreach ($this->sheet as $name => $val) {
-                $form .= '<div class="item-tr">';
+                $form .= '<div class="item-tr form-group">';
                 if (isset($val['type-title'])) {
                     $form .= sprintf("<div class=\"ctitle\">%s</div>", $request->getItemname($name));
                 } else {
-                    $form .= sprintf("<div class=\"c1\">%s</div>", $request->getItemname($name));
-                    $form .= sprintf("<div class=\"c2\">%s</div>",  $request->getValue($name));
+                    $form .= sprintf("<label class=\"c1 control-label col-sm-3\">%s</label>", $request->getItemname($name));
+                    $form .= sprintf("<div class=\"c2 col-sm-9\">%s</div>",  $request->getValue($name));
                 }
                 $form .= '</div>';
             }
@@ -587,56 +587,7 @@ class myConForms {
 
     function getDefaultFormTemplate() {
         $returndata = "";
-        $returndata .= '
-[name1]
-name=お名前
-type=type-text
-check-must=お名前を入力してください
-
-[email]
-type=type-text
-name=メールアドレス
-check-must=メールアドレスを入力してください
-
-[phone]
-name=電話番号
-type=type-phone
-check-must=電話番号を入力して下さい
-
-[zip]
-name=郵便番号
-type=type-zip
-
-[address]
-name=住所
-type=type-address
-
-[question1]
-name=好きな果物
-type=type-radio
-item=りんご#みかん#ぶどう#バナナ#なし
-
-[question2]
-name=好きな肉
-type=type-select
-item=牛肉#豚肉#鶏肉
-
-[question3]
-name=好きな魚
-type=type-checkbox
-item=あじ#さば#いわし#さんま#かれい
-interval=5
-
-[question4]
-name=その他なにかあれば
-type=type-textarea
-
-;; ファイルを添付して送信します
-;[file1]
-;name=添付ファイル
-;type=type-file
-
-';
+        $returndata .= '';
         return $returndata;
     }
     
@@ -645,36 +596,7 @@ type=type-textarea
      */
     function getDefaultMailText() {
         $mailtext = "";
-        $mailtext .= '
-----------------------------------------------------------
-このメールは自動プログラムによって送信されております。
-----------------------------------------------------------
-
-[val:name1] 様
-
-この度は、ホームページよりお問い合わせいただき誠にありがと
-うございました。
-早速、内容を確認し、担当者より連絡します。
-
-以下の内容にて承りましたのでご確認下さい。
------------------------------------------------------------
-◆入力情報
------------------------------------------------------------
-お名前: [val:name1]
-メールアドレス: [val:email]
-電話番号: [val:phone]
-住所: 〒 [val:zip] [val:address]
-すきな果物: [val:question1]
-好きな肉: [val:question2]
-好きな魚: [val:question3]
-
-その他なにかあれば:
-[val:question4]
-
-*****************************************
-
-*****************************************
-';
+        $mailtext .= '';
         return $mailtext;
     }
 
