@@ -185,11 +185,11 @@ class myConForms {
 
         if ($this->isAttachFile()) {
             $form .= '
-<form method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'" enctype="multipart/form-data">
+<form class="form-horizontal" method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'" enctype="multipart/form-data">
 ';
         } else {
             $form .= '
-<form method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'" class="form-horizontal">
+<form class="form-horizontal" method="post" id="registerform" action="'. $_SERVER['REQUEST_URI'] .'" class="form-horizontal">
 ';
         }
         if (isset($this->options['mycontact_form_text']) && $this->options['mycontact_form_text'] != "") {
@@ -206,7 +206,6 @@ class myConForms {
             }
             $form = preg_replace($pattern, $replace, $form);
         } else {
-            // print_r($this->sheet);
             $form .= '<div class="table-inquiry-type2">';
             foreach ($this->sheet as $name => $val) {
                 $form .= '<div class="item-tr form-group">';
@@ -229,7 +228,7 @@ class myConForms {
         }
 
         $form .= '
-<div class="confirmArea form-group text-center">
+<div class="form-group">
 <input type="hidden" name="cfctl" value="confirm" />
 <button type="submit" id="confirm-button" class="btn btn-default">送信項目を確認</button>
 </div>
@@ -312,14 +311,14 @@ class myConForms {
 
         // 以下、確認と修正
         $form .= '
-<div class="confirmArea">
+<div>
 
   <form method="post" action="'. $_SERVER['REQUEST_URI'] .'">
       <input type="hidden" name="cfctl" value="reedit" />';
         $form .= $request->getHiddenValues();
         $form .= '
       <p class="submit">
-        <input type="submit" value="&laquo;&nbsp;修正 " id="edit-button" name="edit" />
+        <input class="btn btn-default" type="submit" value="&laquo;&nbsp;修正 " id="edit-button" name="edit" />
       </p>
   </form>
 ';
@@ -331,7 +330,7 @@ class myConForms {
             $form .= $request->getHiddenValues();
             $form .= '
       <p class="submit">
-        <input type="submit" value="送信 &raquo;" id="send-button" name="submit" />
+        <input class="btn btn-default" type="submit" value="送信 &raquo;" id="send-button" name="submit" />
       </p>
   </form>';
         }
@@ -537,6 +536,9 @@ class myConForms {
                         $sheet[$key][$vals_name] = $vals[$vals_name];
                     }
                 }
+
+				// add class
+				// $sheet[$key]['class'] = $sheet[$key]['class'] . ' form-control';
             }
         }
         return $sheet;
@@ -619,9 +621,9 @@ class myConForms {
 
 <strong>お問い合わせ頂き有り難うございました。</strong>
 
-<div style="margin-left: 150px;">
+<p>
 <a href="' . get_bloginfo('home') . '">トップへ戻る</a>
-</div>';
+</p>';
         $initopt['mycontact_form_text'] = ''; // html
         $initopt['mycontact_confirm_text'] = ''; // html
         $initopt['mycontact_thanks_page_url'] = '';
@@ -919,14 +921,11 @@ if ($display_form_id != "" && $opt != '') {
     }
     
     function mycon_enqueue_style() {
-        wp_enqueue_style('mycon', plugins_url('mycontact.css', __FILE__), false, null);
+        // wp_enqueue_style('mycon', plugins_url('mycontact.css', __FILE__), false, null);
+		wp_enqueue_style('mycon', plugins_url('mycontact-bootstrap.css', __FILE__), false, null);
         wp_enqueue_style('validationEngine', plugins_url('js/validationEngine.jquery.css', __FILE__), false, null);
     }
     
 }
 
 new myConForms();
-
-
-
-?>

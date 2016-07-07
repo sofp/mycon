@@ -13,6 +13,8 @@ class RzFormTextarea extends RzFormBase {
 
 
         $class_str = 'typeTextArea ' . $this->name;
+		$class_str .= ' form-control';
+		
         if (isset($this->sheet['class'])) {
             $class_str = $class_str . ' ' . $this->sheet['class'];
         }

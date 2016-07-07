@@ -26,8 +26,9 @@ class RzFormText extends RzFormBase {
 
         
         $class_str = 'typeText ' . $this->name;
+		$class_str .= ' form-control';
         if (isset($this->sheet['class'])) {
-            $class_str = $class_str . ' ' . $this->sheet['class'];
+            $class_str .= ' ' . $this->sheet['class'];
         }
 
         $type_str = "text";
