@@ -55,8 +55,10 @@ class myConForms {
         add_action('admin_menu',array($this, 'settingMenu'));
         add_action('wp_enqueue_scripts',array($this, 'mycon_enqueue_script'));
         add_action('wp_enqueue_scripts',array($this, 'mycon_enqueue_style'));
-
+		add_action('template_redirect',array($this, 'cf_done_mail'));
         add_action('template_redirect', array($this, 'mycon_redirect_page'));
+
+		
         
         $this->request = new RequestForm();
 
@@ -343,95 +345,7 @@ class myConForms {
     }
 
     function cf_done() {
-        $request = $this->request;
-        
-        $form = "";
-        $options = $this->options;
-        
-        $mailto = $request->get('email');
-        $mailfrom = $options['mycontact_from_addr'];
-
-        
-        $fullname = trim($options['mycontact_from_fullname']);
-
-        mb_language($this->mb_language) ;
-        $fullname = mb_encode_mimeheader($fullname);
-        if ($fullname != '') {
-            $headers = "From: \"$fullname\" <$mailfrom>";
-        } else {
-            $headers = "From: $mailfrom";
-        }
-        if($options['mycontact_cc_addr'] != '') {
-            $headers .= "\nCc: " . $options['mycontact_cc_addr'];
-        }
-        if($options['mycontact_bcc_addr'] != '') {
-            $headers .= "\nBcc: " . $options['mycontact_bcc_addr'];
-        }
-
-        $mailsubject = $options['mycontact_mail_subject']; // 件名
-
-        $mailbody = $options['mycontact_mail_text'];
-
-        // 入力者用文面オプションがある場合
-        if ($options['mycontact_customer_mail_text'] != '') {
-            $mailbody = $options['mycontact_customer_mail_text'];
-        }
-        
-        $mailbody = $request->getItemNamePatterns($mailbody);
-
-        // エラーは管理者に送信する
-        $sendmail_params = "-f" . $options['mycontact_send_addr'];
-        
-        // emailの指定がある場合、入力者に送る
-        if ($mailto != '') {
-            $this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params);
-        }
-
-        // 同じ内容で管理者に送る
-        if (! isset($options['mycontact_send_addr_not_email_send']) || $options['mycontact_send_addr_not_email_send'] != 'NoSend') {
-            $mailto = $options['mycontact_send_addr'];
-        
-            // 入力者用文面オプションがある場合
-            if ($options['mycontact_customer_mail_text'] != '') {
-                $mailbody = $options['mycontact_mail_text'];
-                $mailbody = $request->getItemNamePatterns($mailbody);
-            }
-
-        
-            $bodypre = '
-
-[下記の内容にて入力フォームから受け付けました。]
-
-';
-        
-            $mailbody = $bodypre . $mailbody;
-        
-            if ($this->isAttachFile()) {
-                $files = array();
-                foreach ($this->sheet as $name => $val) {
-                    if (isset($val['type-file']) && $request->get($name) != '') {
-                        $filename = $request->get($name);
-                        $upload_dirs = wp_upload_dir();
-                        $upload_dir = $upload_dirs['basedir'] . '/' . MYCONFORM_UPLOAD_FILE_DIR;
-                        $upfile = $upload_dir . "/" . $filename;
-                        if(file_exists($upfile))
-                            $files[] = $upfile;
-                    }
-                }
-            
-                $this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params, $files);
-
-                // 最後は削除
-                foreach ($files as $del_file) {
-                    if(file_exists($del_file))
-                        unlink($del_file);
-                }
-            } else {
-                // 管理者に送信
-                $this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params);
-            }
-        
-        }
+        $options = 
         
         // ページに表示するメッセージ
         $done_page_text = '
@@ -443,13 +357,112 @@ class myConForms {
 <a href="' . get_bloginfo('home') . '">トップへ戻る</a>
 </div>';
         
-        if($options['mycontact_done_page_text'] != '') {
-            $done_page_text = stripcslashes($options['mycontact_done_page_text']);
+        if($this->options['mycontact_done_page_text'] != '') {
+            $done_page_text = stripcslashes($this->options['mycontact_done_page_text']);
         }
 
         $form .= $done_page_text;
         return $form;
     }
+
+	public function cf_done_mail() {
+		
+		if (isset($_REQUEST['cfctl']) && $_REQUEST['cfctl'] == 'done') {
+            $this_post_obj = get_post();
+            $this->mycontact_filter($this_post_obj->post_content); /* check this page conent has mycon-form tag */
+			
+			$request = $this->request;
+			
+			
+			$options = $this->options;
+        
+			$mailto = $request->get('email');
+			$mailfrom = $options['mycontact_from_addr'];
+
+        
+			$fullname = trim($options['mycontact_from_fullname']);
+
+			mb_language($this->mb_language) ;
+			$fullname = mb_encode_mimeheader($fullname);
+			if ($fullname != '') {
+				$headers = "From: \"$fullname\" <$mailfrom>";
+			} else {
+				$headers = "From: $mailfrom";
+			}
+			if($options['mycontact_cc_addr'] != '') {
+				$headers .= "\nCc: " . $options['mycontact_cc_addr'];
+			}
+			if($options['mycontact_bcc_addr'] != '') {
+				$headers .= "\nBcc: " . $options['mycontact_bcc_addr'];
+			}
+
+			$mailsubject = $options['mycontact_mail_subject']; // 件名
+
+			$mailbody = $options['mycontact_mail_text'];
+
+			// 入力者用文面オプションがある場合
+			if ($options['mycontact_customer_mail_text'] != '') {
+				$mailbody = $options['mycontact_customer_mail_text'];
+			}
+        
+			$mailbody = $request->getItemNamePatterns($mailbody);
+
+			// エラーは管理者に送信する
+			$sendmail_params = "-f" . $options['mycontact_send_addr'];
+        
+			// emailの指定がある場合、入力者に送る
+			if ($mailto != '') {
+				$this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params);
+			}
+
+			// 同じ内容で管理者に送る
+			if (! isset($options['mycontact_send_addr_not_email_send']) || $options['mycontact_send_addr_not_email_send'] != 'NoSend') {
+				$mailto = $options['mycontact_send_addr'];
+        
+				// 入力者用文面オプションがある場合
+				if ($options['mycontact_customer_mail_text'] != '') {
+					$mailbody = $options['mycontact_mail_text'];
+					$mailbody = $request->getItemNamePatterns($mailbody);
+				}
+
+        
+				$bodypre = '
+
+[下記の内容にて入力フォームから受け付けました。]
+
+';
+        
+				$mailbody = $bodypre . $mailbody;
+        
+				if ($this->isAttachFile()) {
+					$files = array();
+					foreach ($this->sheet as $name => $val) {
+						if (isset($val['type-file']) && $request->get($name) != '') {
+							$filename = $request->get($name);
+							$upload_dirs = wp_upload_dir();
+							$upload_dir = $upload_dirs['basedir'] . '/' . MYCONFORM_UPLOAD_FILE_DIR;
+							$upfile = $upload_dir . "/" . $filename;
+							if(file_exists($upfile))
+								$files[] = $upfile;
+						}
+					}
+            
+					$this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params, $files);
+
+					// 最後は削除
+					foreach ($files as $del_file) {
+						if(file_exists($del_file))
+							unlink($del_file);
+					}
+				} else {
+					// 管理者に送信
+					$this->mycon_mail($mailto, $mailsubject, $mailbody, $headers, $sendmail_params);
+				}
+        
+			}
+
+		}
+	}
 
     function isAttachFile() {
         $file_flag = false;
