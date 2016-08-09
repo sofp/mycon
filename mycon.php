@@ -664,7 +664,7 @@ class myConForms {
      */
     function settingMenu() {
         if ( !function_exists( 'add_options_page' ) ) return;
-        add_options_page( 'MyConForms', 'MyConForms', 9, __FILE__, array(&$this,  'settingPage'));
+        add_options_page( 'MyConForms', 'MyConForms', "manage_options", "settingMyconPage", array(&$this,  'settingPage'));
     }
 
     function settingPage() {
